@@ -73,8 +73,7 @@
         <div id="upcoming_games" class="grid grid--cols-6"></div>
         <div id="row2" class="grid grid--cols-2 h--full">
             <div class="card">
-                <div class="title text--center bg--gray-5">Next Game</div>
-                <div id="next_game" class="flex">No upcoming games found.</div>
+                <div id="next_game" class="grid grid--cols-1"></div>
             </div>
             <div class="card">
                 <div class="title text--center bg--gray-5">Previous Games</div>
@@ -201,6 +200,7 @@
             nextTimeStr = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
 
             html = `
+                <div class="title text--center bg--gray-5">${nextGameTitle}</div>
                 <div class="next_game col col--center text--center">
                     <div class="my_team">
                         ${myTeam.name} ${matchupSep}
