@@ -10,7 +10,9 @@ watch:
 custom_fields:
   teamId: 138
 
-time_zone: America/New_York
+# We apparently don't need to set this because the local system's time shows up at UTC
+# when you are running `trmnlp serve`
+# time_zone: America/New_York
 
 # override variables
 variables:

@@ -95,9 +95,16 @@
 
     // TRMNL custom variables
     const teamId = Number("{{ trmnl.plugin_settings.custom_fields_values.teamId }}");
+    const userUtcOffsetSeconds = Number("{{ trmnl.user.utc_offset | default: 0 }}");
 
-    // Use browser local time for all date math
-    const nowUser = new Date();
+    // Helper to get a Date object in user's local time (using UTC offset)
+    function getUserDate(dateString) {
+        const utcDate = new Date(dateString);
+        return new Date(utcDate.getTime() + userUtcOffsetSeconds * 1000);
+    }
+
+    // Use user local time for all date math
+    const nowUser = getUserDate(new Date().toISOString());
     const todayUser = new Date(nowUser.getFullYear(), nowUser.getMonth(), nowUser.getDate());
 
     // Date range for fetching games, based on user's local time
@@ -127,9 +134,9 @@
 
         const games = data.dates?.flatMap(date => date.games) || [];
 
-        // Use browser local time for filtering
-        const upcoming = games.filter(g => new Date(g.gameDate) >= nowUser);
-        const previous = games.filter(g => new Date(g.gameDate) < nowUser);
+        // Use user local time for filtering
+        const upcoming = games.filter(g => getUserDate(g.gameDate) >= nowUser);
+        const previous = games.filter(g => getUserDate(g.gameDate) < nowUser);
 
         // Team record
         let record = null;
@@ -147,7 +154,7 @@
         let html = "";
         if (upcoming.length > 1) {
             upcoming.slice(1, 7).forEach(game => {
-                const dateObj = new Date(game.gameDate);
+                const dateObj = getUserDate(game.gameDate);
                 const dateStr = dateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
                 const weekdayStr = dateObj.toLocaleString(undefined, { weekday: 'long' });
                 const timeStr = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
@@ -182,7 +189,7 @@
         let myTeam, oppTeam, matchupSep;
         let nextGameTitle = "Next Game";
         if (nextGame) {
-            const gameDateObj = new Date(nextGame.gameDate);
+            const gameDateObj = getUserDate(nextGame.gameDate);
             // Compare only the date part (ignore time)
             const isToday =
                 gameDateObj.getFullYear() === todayUser.getFullYear() &&
@@ -237,7 +244,7 @@
                 const away = game.teams.away;
                 const homeAbbr = home.team.abbreviation || home.team.name.slice(0,3).toUpperCase();
                 const awayAbbr = away.team.abbreviation || away.team.name.slice(0,3).toUpperCase();
-                const dateObj = new Date(game.gameDate);
+                const dateObj = getUserDate(game.gameDate);
                 const dateStr = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
                 let matchup = home.team.id === teamId
                     ? `${homeAbbr} vs. ${awayAbbr}`
