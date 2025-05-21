@@ -10,10 +10,7 @@ watch:
 custom_fields:
   teamId: 138
 
+time_zone: America/New_York
+
 # override variables
 variables:
-  trmnl:
-    user:
-      time_zone: EDT
-      timezone: America/New_York
-      utc_offset: -14400
