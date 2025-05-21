@@ -96,27 +96,16 @@
     // TRMNL custom variables
     const teamId = Number("{{ trmnl.plugin_settings.custom_fields_values.teamId }}");
 
-    // Get the user's UTC offset in seconds and convert to milliseconds
-    const userUtcOffsetSeconds = Number("{{ trmnl.user.utc_offset | default: 0 }}");
+    // Use browser local time for all date math
+    const nowUser = new Date();
+    const todayUser = new Date(nowUser.getFullYear(), nowUser.getMonth(), nowUser.getDate());
 
-    // Helper to get a Date object adjusted for the user's timezone, treating input as UTC
-    function getUserDate(dateString) {
-        // Parse as UTC
-        const utcDate = new Date(dateString);
-        // userUtcOffsetSeconds: e.g. -18000 for EST (UTC-5)
-        // UTC time + user offset (in ms) = user's local time
-        return new Date(utcDate.getTime() + userUtcOffsetSeconds * 1000);
-    }
-
-    // For filtering, use the user's local time
-    const nowUser = getUserDate(new Date().toISOString());
-
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(today.getDate() - 10);
+    // Date range for fetching games, based on user's local time
+    const start = new Date(todayUser);
+    start.setDate(todayUser.getDate() - 10);
     const startDate = start.toISOString().slice(0, 10);
-    const future = new Date(today);
-    future.setDate(today.getDate() + 10);
+    const future = new Date(todayUser);
+    future.setDate(todayUser.getDate() + 10);
     const endDate = future.toISOString().slice(0, 10);
 
     function getTeamLogo(teamId) {
@@ -138,8 +127,9 @@
 
         const games = data.dates?.flatMap(date => date.games) || [];
 
-        const upcoming = games.filter(g => new Date(g.gameDate) >= today);
-        const previous = games.filter(g => new Date(g.gameDate) <= today);
+        // Use browser local time for filtering
+        const upcoming = games.filter(g => new Date(g.gameDate) >= nowUser);
+        const previous = games.filter(g => new Date(g.gameDate) < nowUser);
 
         // Team record
         let record = null;
@@ -182,22 +172,35 @@
             containerUpcomingGames.innerHTML = html;
         }
 
-        // Next Game column
-        // Find the next game for the column
-        let nextGame = upcoming[0];
+        // --- Next Game column ---
+        // Show current game if in progress (statusCode === "I"), else next upcoming game
+        let currentGame = games.find(g => {
+            return g.status?.statusCode === "I";
+        });
+        let nextGame = currentGame || upcoming[0];
         let matchup = '', nextDateStr = '', nextTimeStr = '';
         let myTeam, oppTeam, matchupSep;
+        let nextGameTitle = "Next Game";
         if (nextGame) {
+            const gameDateObj = new Date(nextGame.gameDate);
+            // Compare only the date part (ignore time)
+            const isToday =
+                gameDateObj.getFullYear() === todayUser.getFullYear() &&
+                gameDateObj.getMonth() === todayUser.getMonth() &&
+                gameDateObj.getDate() === todayUser.getDate();
+            if (isToday) {
+                nextGameTitle = "Today's Game";
+            }
+
             const home = nextGame.teams.home;
             const away = nextGame.teams.away;
             let isHome = home.team.id === teamId;
             myTeam = isHome ? home.team : away.team;
             oppTeam = isHome ? away.team : home.team;
             matchupSep = isHome ? "vs" : "@";
-            matchup = `${myTeam.name} ${matchupSep} ${oppTeam.name}`
-            const dateObj = new Date(nextGame.gameDate);
-            nextDateStr = dateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
-            nextTimeStr = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+            matchup = `${myTeam.name} ${matchupSep} ${oppTeam.name}`;
+            nextDateStr = gameDateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+            nextTimeStr = gameDateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
 
             html = `
                 <div class="title text--center bg--gray-5">${nextGameTitle}</div>
