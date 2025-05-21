@@ -220,12 +220,12 @@
             containerNextGame.innerHTML = html;
         }
 
-        // Previous game column
-        if (previous.length) {
-            const prevGames = previous.slice(-8).reverse();
-            html = `
-                <div class="previous_games">
-            `;
+        // --- Previous game column ---
+        // Exclude in-progress games (statusCode === "I")
+        const filteredPrevious = previous.filter(game => game.status?.statusCode !== "I");
+        if (filteredPrevious.length) {
+            const prevGames = filteredPrevious.slice(-8).reverse();
+            html = `<div class="previous_games">`;
             prevGames.forEach((game, idx) => {
                 const statusCode = game.status?.statusCode;
                 const statusReason = game.status?.reason || '';
