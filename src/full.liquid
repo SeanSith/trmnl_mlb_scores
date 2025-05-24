@@ -64,18 +64,28 @@
                 }
             }
         }
+        .view--half_vertical {
+            .card--right {
+                /* remove past games */
+                display: none;
+            }
+            #row1 .upcoming_games:nth-child(n+4) {
+            /* only display 3 upcoming games */
+                display: none;
+            }
+        }
     </style>
   </head>
 <body class="environment trmnl">
 
 <div class="screen screen--no-bleed view view--full flex gap--space-between">
     <div id="mlb-scores flex">
-        <div id="upcoming_games" class="grid grid--cols-6"></div>
-        <div id="row2" class="grid grid--cols-2 h--full">
-            <div class="card">
+        <div id="row1" class="grid"></div>
+        <div id="row2" class="grid h--full">
+            <div class="card card--left">
                 <div id="next_game" class="grid grid--cols-1"></div>
             </div>
-            <div class="card">
+            <div class="card card--right">
                 <div class="title text--center bg--gray-5">Previous Games</div>
                 <div id="previous_games"></div>
             </div>
@@ -88,7 +98,7 @@
 (function() {
     // Layout
     const container = document.getElementById('mlb-scores');
-    const containerUpcomingGames = document.getElementById('upcoming_games');
+    const containerUpcomingGames = document.getElementById('row1');
     const containerNextGame = document.getElementById('next_game');
     const containerPreviousGames = document.getElementById('previous_games');
     const footer = document.getElementById('mlb-footer');
