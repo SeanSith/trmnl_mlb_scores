@@ -1,1 +1,330 @@
-half horizontal!
+{% assign view_type = 'half_horizontal' %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://usetrmnl.com/css/latest/plugins.css">
+    <script src="https://usetrmnl.com/js/latest/plugins.js"></script>
+    <style>
+        .screen {
+            font-family: sans-serif;
+        }
+        .upcoming_games {
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+            .matchup {
+                font-weight: bold;
+                padding-bottom: 3px;
+            }
+            .weekday {
+                font-size: 12px;
+            }
+            .datetime {
+                font-size: 12px;
+            }
+        }
+        .card {
+            .title {
+                border-radius: 10px;
+                margin-top: 5px;
+                margin-bottom: 10px;
+                padding: 5px;
+            }
+            .next_game {
+                padding: 5px;
+                .my_team {
+                    font-size: 18px;
+                    margin-bottom: 10px;
+                }
+                .matchup {
+                    font-size: 25px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                img {
+                    width: 150px;
+                    height: 150px;
+                    margin: 0 auto;
+                }
+                .datetime {
+                    margin-top: 10px;
+                    font-size: 20px;
+                }
+            }
+            .previous_games {
+                .previous_games_row {
+                    font-weight: 600;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px;
+                    margin-top: 5px;
+                    padding: 5px;
+
+                    .not_final {
+                        font-size: 14px;
+                    }
+                }
+            }
+        }
+        .view--half_vertical {
+            #card--right { display: none; }
+            #row1 .upcoming_games:nth-child(n+4) { display: none; }
+        }
+        .view--half_horizontal {
+            #row1 { display: none; }
+            #card--right .previous_games_row:nth-child(n+5) { display: none; }
+            .card {
+                .title {
+                    margin-top: 0px;
+                    margin-bottom: 0px;
+                    padding: 0px;
+                }
+                .next_game {
+                    .my_team {
+                        font-size: 15px;
+                        margin-bottom: 5px;
+                    }
+                    .matchup {
+                        font-size: 20px;
+                    }
+                    img {
+                        width: 75px;
+                        height: 75px;
+                    }
+                    .datetime {
+                        font-size: 15px;
+                    }
+                }
+            }
+        }
+    </style>
+  </head>
+<body class="environment trmnl">
+<div class="screen screen--no-bleed view view--{{ view_type }} flex gap--space-between">
+    <div id="mlb-scores flex">
+        <div id="row1" class="grid"></div>
+        <div id="row2" class="grid h--full">
+            <div id="card--left" class="card card--left">
+                <div id="next_game" class="grid grid--cols-1"></div>
+            </div>
+            <div id="card--right" class="card">
+                <div class="title text--center bg--gray-5">Previous Games</div>
+                <div id="previous_games"></div>
+            </div>
+        </div>
+    </div>
+    <div id="mlb-footer" class="title_bar"></div>
+</div>
+
+<script>
+(function() {
+    // Layout
+    const container = document.getElementById('mlb-scores');
+    const containerUpcomingGames = document.getElementById('row1');
+    const containerNextGame = document.getElementById('next_game');
+    const containerPreviousGames = document.getElementById('previous_games');
+    const footer = document.getElementById('mlb-footer');
+
+    // TRMNL custom variables
+    const teamId = Number("{{ trmnl.plugin_settings.custom_fields_values.teamId }}");
+    const userUtcOffsetSeconds = Number("{{ trmnl.user.utc_offset | default: 0 }}");
+
+    // Helper to get a Date object in user's local time (using UTC offset)
+    function getUserDate(dateString) {
+        const utcDate = new Date(dateString);
+        return new Date(utcDate.getTime() + userUtcOffsetSeconds * 1000);
+    }
+
+    // Use user local time for all date math
+    const nowUser = getUserDate(new Date().toISOString());
+    const todayUser = new Date(nowUser.getFullYear(), nowUser.getMonth(), nowUser.getDate());
+
+    // Date range for fetching games, based on user's local time
+    const start = new Date(todayUser);
+    start.setDate(todayUser.getDate() - 10);
+    const startDate = start.toISOString().slice(0, 10);
+    const future = new Date(todayUser);
+    future.setDate(todayUser.getDate() + 10);
+    const endDate = future.toISOString().slice(0, 10);
+
+    function getTeamLogo(teamId) {
+        return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+    }
+
+    (async function() {
+    try {
+        // Get team info
+        const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
+        const teamData = await teamRes.json();
+        const teamObj = teamData.teams && teamData.teams[0];
+        const teamName = teamObj ? teamObj.name : "No Team Selected";
+        const teamAbbr = teamObj ? (teamObj.abbreviation || teamObj.name.slice(0,3).toUpperCase()) : "";
+
+        // Get schedule
+        const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?hydrate=team&sportId=1&teamId=${teamId}&startDate=${startDate}&endDate=${endDate}`);
+        const data = await res.json();
+
+        const games = data.dates?.flatMap(date => date.games) || [];
+
+        // Use user local time for filtering
+        const upcoming = games.filter(g => getUserDate(g.gameDate) >= nowUser);
+        const previous = games.filter(g => getUserDate(g.gameDate) < nowUser);
+
+        // Team record
+        let record = null;
+        let recordSource = previous.length ? previous[previous.length - 1] : (upcoming.length ? upcoming[0] : null);
+        if (recordSource) {
+            let teamObj = recordSource.teams.home.team.id === teamId
+                ? recordSource.teams.home
+                : recordSource.teams.away;
+            if (teamObj.leagueRecord) {
+                record = teamObj.leagueRecord;
+            }
+        }
+
+        // --- Upcoming Games Row ---
+        let html = "";
+        if (upcoming.length > 1) {
+            upcoming.slice(1, 7).forEach(game => {
+                const dateObj = getUserDate(game.gameDate);
+                const dateStr = dateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+                const weekdayStr = dateObj.toLocaleString(undefined, { weekday: 'long' });
+                const timeStr = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                const home = game.teams.home;
+                const away = game.teams.away;
+                const homeAbbr = home.team.abbreviation || home.team.name.slice(0,3).toUpperCase();
+                const awayAbbr = away.team.abbreviation || away.team.name.slice(0,3).toUpperCase();
+                let matchup;
+                if (home.team.id === teamId) {
+                    matchup = `${homeAbbr} vs. ${awayAbbr}`;
+                } else {
+                    matchup = `${awayAbbr} @ ${homeAbbr}`;
+                }
+                html += `
+                <div class="upcoming_games bg--black py--3 text--center text--white">
+                    <div class="matchup">${matchup}</div>
+                    <div class="weekday">${weekdayStr}</div>
+                    <div class="datetime">${dateStr} ${timeStr}</div>
+                </div>
+                `;
+            });
+            containerUpcomingGames.innerHTML = html;
+        }
+
+        // --- Next Game column ---
+        // Show current game if in progress (statusCode === "I"), else next upcoming game
+        let currentGame = games.find(g => {
+            return g.status?.statusCode === "I";
+        });
+        let nextGame = currentGame || upcoming[0];
+        let matchup = '', nextDateStr = '', nextTimeStr = '';
+        let myTeam, oppTeam, matchupSep;
+        let nextGameTitle = "Next Game";
+        if (nextGame) {
+            const gameDateObj = getUserDate(nextGame.gameDate);
+            // Compare only the date part (ignore time)
+            const isToday =
+                gameDateObj.getFullYear() === todayUser.getFullYear() &&
+                gameDateObj.getMonth() === todayUser.getMonth() &&
+                gameDateObj.getDate() === todayUser.getDate();
+            if (isToday) {
+                nextGameTitle = "Today's Game";
+            }
+
+            const home = nextGame.teams.home;
+            const away = nextGame.teams.away;
+            let isHome = home.team.id === teamId;
+            myTeam = isHome ? home.team : away.team;
+            oppTeam = isHome ? away.team : home.team;
+            matchupSep = isHome ? "vs" : "@";
+            matchup = `${myTeam.name} ${matchupSep} ${oppTeam.name}`;
+            nextDateStr = gameDateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+            nextTimeStr = gameDateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+
+            html = `
+                <div class="title text--center bg--gray-5">${nextGameTitle}</div>
+                <div class="next_game col col--center text--center">
+                    <div class="my_team">
+                        ${myTeam.name} ${matchupSep}
+                    </div>
+                    <div class="matchup">
+                       <span>${oppTeam.name}</span>
+                    </div>
+                    <img
+                        src="${getTeamLogo(oppTeam.id)}"
+                        alt="${oppTeam.name} logo"
+                    />
+                    <div class="datetime">
+                        ${nextDateStr} &middot; ${nextTimeStr}
+                    </div>
+                </div>
+            `;
+            containerNextGame.innerHTML = html;
+        }
+
+        // --- Previous game column ---
+        // Exclude in-progress games (statusCode === "I")
+        const filteredPrevious = previous.filter(game => game.status?.statusCode !== "I");
+        if (filteredPrevious.length) {
+            const prevGames = filteredPrevious.slice(-8).reverse();
+            html = `<div class="previous_games">`;
+            prevGames.forEach((game, idx) => {
+                const statusCode = game.status?.statusCode;
+                const statusReason = game.status?.reason || '';
+                const detailedState = game.status?.detailedState || '';
+                const home = game.teams.home;
+                const away = game.teams.away;
+                const homeAbbr = home.team.abbreviation || home.team.name.slice(0,3).toUpperCase();
+                const awayAbbr = away.team.abbreviation || away.team.name.slice(0,3).toUpperCase();
+                const dateObj = getUserDate(game.gameDate);
+                const dateStr = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+                let matchup = home.team.id === teamId
+                    ? `${homeAbbr} vs. ${awayAbbr}`
+                    : `${awayAbbr} @ ${homeAbbr}`;
+
+                const homeScore = home.score;
+                const awayScore = away.score;
+                let isHome = home.team.id === teamId;
+                let teamScore = isHome ? homeScore : awayScore;
+                let oppScore = isHome ? awayScore : homeScore;
+                let result = teamScore > oppScore ? "W" : "L";
+                let scoreStr = homeScore > awayScore
+                    ? `${homeScore}-${awayScore}`
+                    : `${awayScore}-${homeScore}`;
+                const backgroundClass = result === "L" ? 'bg--gray-6' : '';
+                html += `
+                    <div class="previous_games_row grid col--center grid--cols-5 ${backgroundClass}">
+                        <div class="date col col--center col--span-1">${dateStr}</div>
+                        <div class="matchup col col--center col--span-2">${matchup}</div>
+                `
+                if (statusCode !== "F") {
+                    const statusText = detailedState + (statusReason ? ` - ${statusReason}` : "");
+                    html += `<div class="not_final col col--center col--span-2">${statusText || "Not Final"}</div>`;
+                } else {
+                    html += `
+                        <div class="score col col--center col--span-1">${scoreStr}</div>
+                        <div class="result col col--center col--span-1">${result}</div>
+                    `
+                };
+                html += `</div>`;
+            });
+            html += `</div>`;
+            containerPreviousGames.innerHTML = html;
+        }
+
+        // --- Footer ---
+        let recordStr = record
+            ? ` (${record.wins} - ${record.losses})`
+            : "";
+        html = `
+            <img src="${getTeamLogo(teamId)}" alt="${teamName} logo" class="image">
+            <span class="instance">${teamName}${recordStr}</span>
+        `;
+        footer.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = "<p class='trmnl-text-error'>Could not load MLB scores. Please try again later.</p>";
+    }
+    })();
+})();
+</script>
+</body>
+</html>

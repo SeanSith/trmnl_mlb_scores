@@ -1,3 +1,4 @@
+{% assign view_type = 'half_vertical' %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -65,27 +66,47 @@
             }
         }
         .view--half_vertical {
-            .card--right {
-                /* remove past games */
-                display: none;
-            }
-            #row1 .upcoming_games:nth-child(n+4) {
-            /* only display 3 upcoming games */
-                display: none;
+            #card--right { display: none; }
+            #row1 .upcoming_games:nth-child(n+4) { display: none; }
+        }
+        .view--half_horizontal {
+            #row1 { display: none; }
+            #card--right .previous_games_row:nth-child(n+5) { display: none; }
+            .card {
+                .title {
+                    margin-top: 0px;
+                    margin-bottom: 0px;
+                    padding: 0px;
+                }
+                .next_game {
+                    .my_team {
+                        font-size: 15px;
+                        margin-bottom: 5px;
+                    }
+                    .matchup {
+                        font-size: 20px;
+                    }
+                    img {
+                        width: 75px;
+                        height: 75px;
+                    }
+                    .datetime {
+                        font-size: 15px;
+                    }
+                }
             }
         }
     </style>
   </head>
 <body class="environment trmnl">
-
-<div class="screen screen--no-bleed view view--half_vertical flex gap--space-between">
+<div class="screen screen--no-bleed view view--{{ view_type }} flex gap--space-between">
     <div id="mlb-scores flex">
         <div id="row1" class="grid"></div>
         <div id="row2" class="grid h--full">
-            <div class="card card--left">
+            <div id="card--left" class="card card--left">
                 <div id="next_game" class="grid grid--cols-1"></div>
             </div>
-            <div class="card card--right">
+            <div id="card--right" class="card">
                 <div class="title text--center bg--gray-5">Previous Games</div>
                 <div id="previous_games"></div>
             </div>
