@@ -6,6 +6,7 @@ static_data: ''
 polling_verb: get
 polling_url: ''
 polling_headers: ''
+polling_body: ''
 id: 68045
 custom_fields:
 - keyname: teamId
@@ -43,4 +44,4 @@ custom_fields:
   - Toronto Blue Jays: 141
   - Washington Nationals: 120
 name: MLB Scores
-refresh_interval: 1440
+refresh_interval: 360

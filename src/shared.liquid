@@ -1,0 +1,240 @@
+<script>
+// TRMNL custom variables
+const teamId = Number("{{ trmnl.plugin_settings.custom_fields_values.teamId }}");
+const userUtcOffsetSeconds = Number("{{ trmnl.user.utc_offset | default: 0 }}");
+
+function getTeamLogoUrl(teamId) {
+  return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+}
+
+async function getTeamInfo(teamId) {
+    const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
+    const teamData = await teamRes.json();
+    let teamObj = teamData.teams && teamData.teams[0];
+    if (teamObj === undefined) {
+        throw new Error(`Team ID ${teamId} not found`);
+    } else {
+        teamObj.logo = getTeamLogoUrl(teamId);
+    }
+    return teamObj;
+}
+
+function getUserDate(dateString) {
+    let utcDate = new Date(dateString);
+    return new Date(utcDate.getTime() + userUtcOffsetSeconds * 1000);
+}
+
+function nowUser() {
+    const now = new Date();
+    return new Date(now.getTime() + userUtcOffsetSeconds * 1000);
+    // return getUserDate(new Date('2025-07-05T00:00:00Z')); // For testing
+}
+
+async function getTeamSchedule(teamId) {
+    // Use user local time for all date math
+    // const nowUser = getUserDate(new Date().toISOString());
+    const now = nowUser();
+    const todayUser = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Date range for fetching games, based on user's local time
+    const start = new Date(todayUser);
+    start.setDate(todayUser.getDate() - 10);
+    const startDate = start.toISOString().slice(0, 10);
+    const future = new Date(todayUser);
+    future.setDate(todayUser.getDate() + 10);
+    const endDate = future.toISOString().slice(0, 10);
+
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?hydrate=team&sportId=1&teamId=${teamId}&startDate=${startDate}&endDate=${endDate}`);
+    let data = await res.json();
+    let games = data.dates?.flatMap(date => date.games) || [];
+    return {
+        upcoming: games.filter(g => getUserDate(g.gameDate) >= now),
+        previous: games.filter(g => getUserDate(g.gameDate) < now)
+    }
+}
+
+function getTeamRecord(games) {
+    let record = null;
+    let game = games.previous.length ? games.previous[games.previous.length - 1] : (games.upcoming.length ? games.upcoming[0] : null);
+    if (game) {
+        let teamObj = game.teams.home.team.id === teamId
+            ? game.teams.home
+            : game.teams.away;
+        if (teamObj.leagueRecord) {
+            record = teamObj.leagueRecord;
+        }
+    }
+    return {
+        wins: record?.wins || 0,
+        losses: record?.losses || 0,
+        pct: record?.pct || "0.000"
+    };
+}
+
+function parseUpcomingGames(games) {
+    return games.slice(1, 6).map(game => {
+        const dateObj = getUserDate(game.gameDate);
+        const weekdayStr = dateObj.toLocaleDateString(undefined, { weekday: 'long' });
+        const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+
+        const homeAbbr = game.teams.home.team.abbreviation;
+        const awayAbbr = game.teams.away.team.abbreviation;
+        let matchup = '';
+        if (game.teams.home.team.id === teamId) {
+            matchup = `${homeAbbr} vs ${awayAbbr}`;
+        } else {
+            matchup = `${awayAbbr} @ ${homeAbbr}`;
+        }
+
+        return {
+            matchup: matchup,
+            dayofweek: weekdayStr,
+            date: dateStr,
+            time: timeStr
+        };
+    });
+}
+
+function getNextGame(g) {
+    // Show current game if in progress (statusCode === "I"), else next upcoming game
+    const today = getUserDate(nowUser());
+
+    let title = "Next Game";
+    if (g.status?.statusCode === "I") {
+        let title = "Current Game";
+    }
+    const gameDateObj = getUserDate(g.gameDate);
+    // Compare only the date part (ignore time)
+    const isToday =
+        gameDateObj.getFullYear() === today.getFullYear() &&
+        gameDateObj.getMonth() === today.getMonth() &&
+        gameDateObj.getDate() === today.getDate();
+    if (isToday) {
+        title = "Today's Game";
+    }
+
+    const home = g.teams.home;
+    const away = g.teams.away;
+    let isHome = home.team.id === teamId;
+    let myTeam = isHome ? home.team : away.team;
+    let oppTeam = isHome ? away.team : home.team;
+    let matchupSep = isHome ? "vs" : "@";
+    let gameDate = gameDateObj.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+    let gameTime = gameDateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+    return {
+        title: title,
+        myTeam: {
+            id: myTeam.id,
+            name: myTeam.name,
+            logo: getTeamLogoUrl(myTeam.id)
+        },
+        oppTeam: {
+            id: oppTeam.id,
+            name: oppTeam.name,
+            logo: getTeamLogoUrl(oppTeam.id)
+        },
+        matchupSep: matchupSep,
+        date: gameDate,
+        time: gameTime
+    };
+}
+
+function parsePreviousGames(games) {
+    // Skip in progress games (statusCode "I")
+    return games.filter(g => g.status.statusCode !== "I").map(game => {
+
+        const homeScore = game.teams.home.score;
+        const awayScore = game.teams.away.score;
+        let isHome = game.teams.home.team.id === teamId;
+        let teamScore = isHome ? homeScore : awayScore;
+        let oppScore = isHome ? awayScore : homeScore;
+
+        return {
+            statusCode: game.status.statusCode,
+            statusReason: game.status.reason || '',
+            detailedState: game.status?.detailedState || '',
+            home: game.teams.home,
+            away: game.teams.away,
+            score: {
+                home: homeScore,
+                away: awayScore
+            },
+            date: `${(new Date(game.gameDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(game.gameDate).getDate().toString().padStart(2, '0')}`,
+            matchup: game.teams.home.team.id === teamId
+                        ? `${game.teams.home.team.abbreviation} vs. ${game.teams.away.team.abbreviation}`
+                        : `${game.teams.away.team.abbreviation} @ ${game.teams.home.team.abbreviation}`,
+            result: teamScore > oppScore ? "W" : "L",
+            formattedScore: homeScore > awayScore
+                                ? `${homeScore}-${awayScore}`
+                                : `${awayScore}-${homeScore}`
+        };
+    });
+}
+</script>
+
+<style>
+    .view {
+        font-family: sans-serif;
+    }
+    #upcoming_games {
+        font-size: 12px;
+        min-height: 50px;
+        .game {
+            width: calc(100% / 5);
+            border-radius: 10px;
+            .matchup {
+                font-weight: 600;
+                font-size: 18px;
+            }
+            .dayofweek {
+font-weight: 600;
+                font-size: 14px;
+            }
+            .gametime {
+font-weight: 600;
+                font-size: 14px;
+            }
+        }
+    }
+    .card {
+        .title {
+            border-radius: 10px;
+        }
+        #next_game {
+            #my_team {
+                font-size: 18px;
+            }
+            #matchup {
+                font-size: 25px;
+                margin-bottom: 0px;
+            }
+            img {
+                width: 140px;
+                height: 140px;
+                margin: 0 auto;
+            }
+            #datetime {
+                margin-top: 5px;
+                font-size: 20px;
+            }
+        }
+        #previous_games {
+            #previous_games_row {
+                font-weight: 600;
+                border-radius: 10px;
+                padding: 5px;
+
+                #not_final {
+                    font-size: 14px;
+                }
+            }
+        }
+        .border-solid {
+            border: 1px solid;
+        }
+        .border-dotted {
+            border: 1px dotted;
+        }
+    }
+</style>
