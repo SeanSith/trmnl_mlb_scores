@@ -9,6 +9,11 @@ polling_headers: ''
 polling_body: ''
 id: 68045
 custom_fields:
+- keyname: about
+  name: About This Plugin
+  field_type: author_bio
+  description: MLB Scores displays upcoming and past games for your favorite MLB team.
+  github_url: https://github.com/SeanSith/trmnl_mlb_scores
 - keyname: teamId
   field_type: select
   name: Your team
@@ -44,4 +49,4 @@ custom_fields:
   - Toronto Blue Jays: 141
   - Washington Nationals: 120
 name: MLB Scores
-refresh_interval: 360
+refresh_interval: 1440
