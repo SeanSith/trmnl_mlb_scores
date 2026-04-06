@@ -7,16 +7,12 @@ function getTeamLogoUrl(teamId) {
   return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
 }
 
-async function getTeamInfo(teamId) {
-    const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
-    const teamData = await teamRes.json();
-    let teamObj = teamData.teams && teamData.teams[0];
-    if (teamObj === undefined) {
-        throw new Error(`Team ID ${teamId} not found`);
-    } else {
-        teamObj.logo = getTeamLogoUrl(teamId);
-    }
-    return teamObj;
+function getTeamInfoFromGames(games) {
+    const allGames = [...games.previous, ...games.upcoming];
+    const game = allGames[0];
+    if (!game) return { name: "MLB", logo: getTeamLogoUrl(teamId) };
+    const team = game.teams.home.team.id === teamId ? game.teams.home.team : game.teams.away.team;
+    return { name: team.name, logo: getTeamLogoUrl(teamId) };
 }
 
 function getUserDate(dateString) {
@@ -27,12 +23,9 @@ function getUserDate(dateString) {
 function nowUser() {
     const now = new Date();
     return new Date(now.getTime() + userUtcOffsetSeconds * 1000);
-    // return getUserDate(new Date('2025-07-05T00:00:00Z')); // For testing
 }
 
 async function getTeamSchedule(teamId) {
-    // Use user local time for all date math
-    // const nowUser = getUserDate(new Date().toISOString());
     const now = nowUser();
     const todayUser = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -98,11 +91,11 @@ function parseUpcomingGames(games) {
 
 function getNextGame(g) {
     // Show current game if in progress (statusCode === "I"), else next upcoming game
-    const today = getUserDate(nowUser());
+    const today = nowUser();
 
     let title = "Next Game";
     if (g.status?.statusCode === "I") {
-        let title = "Current Game";
+        title = "Current Game";
     }
     const gameDateObj = getUserDate(g.gameDate);
     // Compare only the date part (ignore time)
@@ -125,9 +118,7 @@ function getNextGame(g) {
     return {
         title: title,
         myTeam: {
-            id: myTeam.id,
             name: myTeam.name,
-            logo: getTeamLogoUrl(myTeam.id)
         },
         oppTeam: {
             id: oppTeam.id,
@@ -150,17 +141,12 @@ function parsePreviousGames(games) {
         let teamScore = isHome ? homeScore : awayScore;
         let oppScore = isHome ? awayScore : homeScore;
 
+        const dateObj = getUserDate(game.gameDate);
         return {
             statusCode: game.status.statusCode,
             statusReason: game.status.reason || '',
             detailedState: game.status?.detailedState || '',
-            home: game.teams.home,
-            away: game.teams.away,
-            score: {
-                home: homeScore,
-                away: awayScore
-            },
-            date: `${(new Date(game.gameDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(game.gameDate).getDate().toString().padStart(2, '0')}`,
+            date: `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`,
             matchup: game.teams.home.team.id === teamId
                         ? `${game.teams.home.team.abbreviation} vs. ${game.teams.away.team.abbreviation}`
                         : `${game.teams.away.team.abbreviation} @ ${game.teams.home.team.abbreviation}`,
@@ -188,11 +174,11 @@ function parsePreviousGames(games) {
                 font-size: 18px;
             }
             .dayofweek {
-font-weight: 600;
+                font-weight: 600;
                 font-size: 14px;
             }
             .gametime {
-font-weight: 600;
+                font-weight: 600;
                 font-size: 14px;
             }
         }

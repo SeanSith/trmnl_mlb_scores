@@ -25,9 +25,9 @@
     try {
         let html = "";
 
-        const teamInfo = await getTeamInfo(teamId);  // Get team info
-        const games = await getTeamSchedule(teamId); // Get team schedule
-        const record = getTeamRecord(games);           // Get team record
+        const games = await getTeamSchedule(teamId);
+        const teamInfo = getTeamInfoFromGames(games);
+        const record = getTeamRecord(games);
 
         /*
          * --- Footer ---
