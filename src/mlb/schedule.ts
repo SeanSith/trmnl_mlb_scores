@@ -32,7 +32,7 @@ export function splitSchedule(games: ProcessedGame[], nowMs: number, utcOffsetSe
   const userNowMs = nowMs + utcOffsetSeconds * 1000;
   return {
     previous: games.filter(g => g.gameDate.getTime() + utcOffsetSeconds * 1000 < userNowMs && g.statusCode !== 'I'),
-    upcoming: games.filter(g => g.gameDate.getTime() + utcOffsetSeconds * 1000 >= userNowMs),
+    upcoming: games.filter(g => g.gameDate.getTime() + utcOffsetSeconds * 1000 >= userNowMs || g.statusCode === 'I'),
   };
 }
 

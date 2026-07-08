@@ -52,7 +52,6 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
   const renderOpts = {
     teamId: record.team_id,
     teamName: record.team_name,
-    teamAbbr: record.team_abbreviation,
     schedule,
     utcOffsetSeconds,
     logoSvg,

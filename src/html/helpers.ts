@@ -3,7 +3,6 @@ import type { TeamSchedule, ProcessedGame } from '../mlb/types';
 export interface RenderOptions {
   teamId: number;
   teamName: string;
-  teamAbbr: string;
   schedule: TeamSchedule;
   utcOffsetSeconds: number;
   logoSvg: string;
