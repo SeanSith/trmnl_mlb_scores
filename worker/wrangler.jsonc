@@ -1,0 +1,28 @@
+{
+	"name": "mlb-scores",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			"binding": "USERS",
+			"id": "REPLACE_AFTER_CREATION",
+			"preview_id": "REPLACE_AFTER_CREATION"
+		},
+		{
+			"binding": "SCHEDULE",
+			"id": "REPLACE_AFTER_CREATION",
+			"preview_id": "REPLACE_AFTER_CREATION"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "LOGOS",
+			"bucket_name": "mlb-logos",
+			"preview_bucket_name": "mlb-logos-preview"
+		}
+	]
+}
