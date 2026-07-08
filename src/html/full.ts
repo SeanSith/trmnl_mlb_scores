@@ -26,7 +26,6 @@ export function renderFull(opts: RenderOptions): string {
   #upcoming_games .game .matchup { font-weight: 600; font-size: 18px; }
   #upcoming_games .game .dayofweek { font-weight: 600; font-size: 14px; }
   #upcoming_games .game .gametime { font-weight: 600; font-size: 14px; }
-  .card .title { border-radius: 10px; }
 </style>
 
 <div id="mlb-scores" class="view view--full">

@@ -11,7 +11,8 @@ export interface RenderOptions {
 }
 
 export const TRMNL_ASSETS = `<link rel="stylesheet" href="https://trmnl.com/css/latest/plugins.css">
-<script src="https://trmnl.com/js/latest/plugins.js"></script>`;
+<script src="https://trmnl.com/js/latest/plugins.js"></script>
+<style>.card .title { border-radius: 10px; }</style>`;
 
 export function getRecord(teamId: number, games: ProcessedGame[]): { wins: number; losses: number } {
   const game = [...games].reverse().find(g =>
@@ -87,10 +88,10 @@ export function nextGameCard(
 
   return `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">${title}</p></div>
 <div class="flex flex--col flex--center-y h--full">
-  <div class="flex w--full flex--center-x">${myTeam.name} ${sep}</div>
-  <div class="flex w--full flex--center-x"><strong style="font-size:1.4em;">${opp.name}</strong></div>
+  <div class="flex w--full flex--center-x" style="font-size:18px;">${myTeam.name} ${sep}</div>
+  <div class="flex w--full flex--center-x"><strong style="font-size:25px;margin-bottom:0;">${opp.name}</strong></div>
   <div class="flex w--full flex--center-x">${logoImg}</div>
-  <div class="flex w--full flex--center-x">${formatDate(d)} &middot; ${formatTime(d)}</div>
+  <div class="flex w--full flex--center-x" style="margin-top:5px;font-size:20px;">${formatDate(d)} &middot; ${formatTime(d)}</div>
 </div>`;
 }
 
