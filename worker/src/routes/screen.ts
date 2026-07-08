@@ -16,15 +16,16 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
   const userUuid = form.get('user_uuid') as string | null;
   const trmnlRaw = form.get('trmnl') as string | null;
 
-  if (!userUuid || !trmnlRaw) return new Response('Bad Request', { status: 400 });
-
-  const meta: TRMNLMeta = JSON.parse(trmnlRaw);
-  const utcOffsetSeconds = meta.user.utc_offset;
+  if (!userUuid) return new Response('Bad Request', { status: 400 });
 
   const record = await getUser(env.USERS, userUuid);
   if (!record || record.access_token !== bearerToken) {
     return new Response('Unauthorized', { status: 401 });
   }
+
+  const utcOffsetSeconds = trmnlRaw
+    ? (JSON.parse(trmnlRaw) as TRMNLMeta).user.utc_offset
+    : (record.raw?.utc_offset ?? 0);
 
   const now = new Date();
   const todayUtc = now.toISOString().slice(0, 10);
@@ -39,6 +40,12 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
   const schedule = splitSchedule(games, now.getTime(), utcOffsetSeconds);
   const logoSvg = await getLogoSvg(env.LOGOS, record.team_id);
 
+  const nextGame = schedule.upcoming[0];
+  const oppTeamId = nextGame
+    ? (nextGame.home.teamId === record.team_id ? nextGame.away.teamId : nextGame.home.teamId)
+    : null;
+  const oppLogoSvg = oppTeamId ? await getLogoSvg(env.LOGOS, oppTeamId) : null;
+
   const markup = renderFull({
     teamId: record.team_id,
     teamName: record.team_name,
@@ -46,6 +53,7 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
     schedule,
     utcOffsetSeconds,
     logoSvg,
+    oppLogoSvg,
   });
 
   const response: ScreenResponse = {

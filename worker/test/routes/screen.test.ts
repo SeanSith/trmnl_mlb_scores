@@ -99,7 +99,8 @@ describe('POST /screen', () => {
 
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => mlbResponse })
-      .mockResolvedValueOnce({ ok: true, text: async () => '<svg></svg>' })
+      .mockResolvedValueOnce({ ok: true, text: async () => '<svg></svg>' })  // team logo
+      .mockResolvedValueOnce({ ok: true, text: async () => '<svg></svg>' })  // opponent logo
     );
 
     const req = makeScreenRequest(uuid, token);
