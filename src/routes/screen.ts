@@ -6,7 +6,9 @@ import { fetchTeamSchedule } from '../mlb/api';
 import { splitSchedule, dateWindowArgs } from '../mlb/schedule';
 import { getLogoSvg } from '../r2/logos';
 import { renderFull } from '../html/full';
-import { renderHalfHorizontal, renderHalfVertical, renderQuadrant } from '../html/stubs';
+import { renderHalfHorizontal } from '../html/half_horizontal';
+import { renderHalfVertical } from '../html/half_vertical';
+import { renderQuadrant } from '../html/quadrant';
 
 export async function handleScreen(request: Request, env: Env): Promise<Response> {
   const authHeader = request.headers.get('Authorization') ?? '';
@@ -23,9 +25,10 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const utcOffsetSeconds = trmnlRaw
-    ? (JSON.parse(trmnlRaw) as TRMNLMeta).user.utc_offset
-    : (record.raw?.utc_offset ?? 0);
+  let utcOffsetSeconds = record.raw?.utc_offset ?? 0;
+  if (trmnlRaw) {
+    try { utcOffsetSeconds = (JSON.parse(trmnlRaw) as TRMNLMeta).user.utc_offset; } catch {}
+  }
 
   const now = new Date();
   const todayUtc = now.toISOString().slice(0, 10);
@@ -46,7 +49,7 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
     : null;
   const oppLogoSvg = oppTeamId ? await getLogoSvg(env.LOGOS, oppTeamId) : null;
 
-  const markup = renderFull({
+  const renderOpts = {
     teamId: record.team_id,
     teamName: record.team_name,
     teamAbbr: record.team_abbreviation,
@@ -54,13 +57,13 @@ export async function handleScreen(request: Request, env: Env): Promise<Response
     utcOffsetSeconds,
     logoSvg,
     oppLogoSvg,
-  });
+  };
 
   const response: ScreenResponse = {
-    markup,
-    markup_half_horizontal: renderHalfHorizontal(),
-    markup_half_vertical: renderHalfVertical(),
-    markup_quadrant: renderQuadrant(),
+    markup: renderFull(renderOpts),
+    markup_half_horizontal: renderHalfHorizontal(renderOpts),
+    markup_half_vertical: renderHalfVertical(renderOpts),
+    markup_quadrant: renderQuadrant(renderOpts),
     shared: '',
   };
 
