@@ -105,7 +105,7 @@ export function previousGamesRows(teamId: number, previous: ProcessedGame[], utc
     const myScore = isHome ? (game.home.score ?? 0) : (game.away.score ?? 0);
     const oppScore = isHome ? (game.away.score ?? 0) : (game.home.score ?? 0);
     const result = myScore > oppScore ? 'W' : 'L';
-    const bgClass = result === 'L' ? 'bg--gray-6' : '';
+    const bgClass = game.statusCode === 'F' && result === 'L' ? 'bg--gray-6' : '';
     const matchup = isHome
       ? `${game.home.abbreviation} vs. ${game.away.abbreviation}`
       : `${game.away.abbreviation} @ ${game.home.abbreviation}`;
@@ -114,7 +114,7 @@ export function previousGamesRows(teamId: number, previous: ProcessedGame[], utc
     const low = Math.min(myScore, oppScore);
 
     const scoreOrStatus = game.statusCode !== 'F'
-      ? `<div class="grid col--center col--span-2">${game.detailedState}</div>`
+      ? `<div class="grid col--center col--span-2">${game.detailedState}${game.statusReason ? ` - ${game.statusReason}` : ''}</div>`
       : `<div class="grid col--center col--span-1">${high}-${low}</div>
          <div class="grid col--center col--span-1">${result}</div>`;
 
