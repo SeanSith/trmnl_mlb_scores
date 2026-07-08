@@ -12,8 +12,6 @@ import {
   previousGamesRows,
 } from './helpers';
 
-export type { RenderOptions };
-
 export function renderFull(opts: RenderOptions): string {
   const { teamId, teamName, schedule, utcOffsetSeconds, logoSvg, oppLogoSvg } = opts;
   const { previous, upcoming } = schedule;
