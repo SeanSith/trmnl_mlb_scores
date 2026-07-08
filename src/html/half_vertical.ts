@@ -21,7 +21,7 @@ export function renderHalfVertical(opts: RenderOptions): string {
   <div class="layout layout--col">
     ${tiles ? `<div class="flex flex--row w--full gap--xsmall text--center">${tiles}</div>` : ''}
     <div class="card flex flex--col flex--stretch-x">
-      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 100)}
+      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 100, { myTeam: 18, opp: 25, datetime: 20 }, false, false)}
     </div>
     <div class="flex flex--col">
       ${previousGamesRows(teamId, previous, utcOffsetSeconds, 3)}

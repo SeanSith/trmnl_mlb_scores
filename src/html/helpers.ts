@@ -62,6 +62,7 @@ export function nextGameCard(
   logoSize = 140,
   textSizes = { myTeam: 18, opp: 25, datetime: 20 },
   compact = false,
+  showHeader = true,
 ): string {
   if (upcoming.length === 0) {
     return `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">No Upcoming Games</p></div>`;
@@ -87,8 +88,11 @@ export function nextGameCard(
     ? `<img src="${logoDataUri(oppLogoSvg)}" alt="${opp.name} logo" style="width:${logoSize}px;height:${logoSize}px;margin:0 auto;">`
     : '';
 
-  return `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">${title}</p></div>
-<div class="flex flex--col flex--center-y${compact ? '' : ' h--full'}">
+  const header = showHeader
+    ? `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">${title}</p></div>\n`
+    : '';
+
+  return `${header}<div class="flex flex--col flex--center-y${compact ? '' : ' h--full'}"${compact ? ' style="gap:4px;"' : ''}>
   <div class="flex w--full flex--center-x" style="font-size:${textSizes.myTeam}px;">${myTeam.name} ${sep}</div>
   <div class="flex w--full flex--center-x"><strong style="font-size:${textSizes.opp}px;margin-bottom:0;">${opp.name}</strong></div>
   <div class="flex w--full flex--center-x">${logoImg}</div>
