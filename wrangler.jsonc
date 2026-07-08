@@ -25,5 +25,15 @@
 			"bucket_name": "mlb-logos",
 			"preview_bucket_name": "mlb-logos-preview"
 		}
+	],
+	"ratelimits": [
+		{
+			"name": "RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 20,
+				"period": 60
+			}
+		}
 	]
 }

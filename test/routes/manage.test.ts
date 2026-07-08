@@ -54,20 +54,30 @@ describe('POST /manage', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 404 for unknown uuid', async () => {
+  it('returns 401 for unknown uuid', async () => {
     const req = new Request('https://example.com/manage', {
       method: 'POST',
-      body: new URLSearchParams({ uuid: 'ghost', team_id: '137' }),
+      body: new URLSearchParams({ uuid: 'ghost', token: 'tok_test', team_id: '137' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     const res = await handleManage(req, env);
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 for wrong token', async () => {
+    const req = new Request('https://example.com/manage', {
+      method: 'POST',
+      body: new URLSearchParams({ uuid, token: 'wrong', team_id: '137' }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    const res = await handleManage(req, env);
+    expect(res.status).toBe(401);
   });
 
   it('returns 404 for unknown team_id', async () => {
     const req = new Request('https://example.com/manage', {
       method: 'POST',
-      body: new URLSearchParams({ uuid, team_id: '999' }),
+      body: new URLSearchParams({ uuid, token: 'tok_test', team_id: '999' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     const res = await handleManage(req, env);
@@ -77,7 +87,7 @@ describe('POST /manage', () => {
   it('updates user record and shows success page', async () => {
     const req = new Request('https://example.com/manage', {
       method: 'POST',
-      body: new URLSearchParams({ uuid, team_id: '119' }),
+      body: new URLSearchParams({ uuid, token: 'tok_test', team_id: '119' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     const res = await handleManage(req, env);

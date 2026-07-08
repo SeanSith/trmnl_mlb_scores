@@ -58,6 +58,7 @@ async function handleGet(url: URL, env: Env): Promise<Response> {
   <p>Update your team selection.</p>
   <form method="POST" action="/manage">
     <input type="hidden" name="uuid" value="${uuid}">
+    <input type="hidden" name="token" value="${user.access_token}">
     <select name="team_id" required>
       ${teamOptions}
     </select>
@@ -73,15 +74,16 @@ async function handleGet(url: URL, env: Env): Promise<Response> {
 async function handlePost(request: Request, env: Env): Promise<Response> {
   const form = await request.formData();
   const uuid = form.get('uuid') as string | null;
+  const token = form.get('token') as string | null;
   const teamIdStr = form.get('team_id') as string | null;
 
-  if (!uuid || !teamIdStr) return new Response('Missing required fields', { status: 400 });
+  if (!uuid || !token || !teamIdStr) return new Response('Missing required fields', { status: 400 });
 
   const teamId = parseInt(teamIdStr, 10);
   if (isNaN(teamId)) return new Response('Invalid team_id', { status: 400 });
 
   const user = await getUser(env.USERS, uuid);
-  if (!user) return new Response('User not found', { status: 404 });
+  if (!user || user.access_token !== token) return new Response('Unauthorized', { status: 401 });
 
   let teams = await getCachedTeams(env.SCHEDULE, MLB_SPORT_ID);
   if (!teams) {
