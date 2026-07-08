@@ -77,6 +77,24 @@ describe('POST /screen', () => {
     expect(body.markup).toContain('mlb-scores');
   });
 
+  it('returns 200 when trmnl metadata field is absent (TRMNL does not always send it)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, text: async () => '<svg></svg>',
+    }));
+    const req = new Request('https://example.com/screen', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ user_uuid: uuid }),
+    });
+    const res = await handleScreen(req, env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, string>;
+    expect(body).toHaveProperty('markup');
+  });
+
   it('fetches from MLB API when cache is cold and caches the result', async () => {
     const today = new Date().toISOString().slice(0, 10);
     await env.SCHEDULE.delete(`schedule:137:${today}`);
