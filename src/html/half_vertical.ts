@@ -14,7 +14,7 @@ export function renderHalfVertical(opts: RenderOptions): string {
 
   return `${TRMNL_ASSETS}
 <div class="view view--half_vertical">
-  <div class="flex flex--col w--full h--full">
+  <div class="layout layout--col">
     <div class="card flex flex--col flex--stretch-x">
       ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 100)}
     </div>

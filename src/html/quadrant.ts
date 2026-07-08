@@ -13,9 +13,9 @@ export function renderQuadrant(opts: RenderOptions): string {
 
   return `${TRMNL_ASSETS}
 <div class="view view--quadrant">
-  <div class="flex flex--col w--full h--full">
-    <div class="card flex flex--col flex--stretch-x h--full">
-      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 60)}
+  <div class="layout">
+    <div class="card flex flex--col flex--stretch-x">
+      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 60, { myTeam: 12, opp: 16, datetime: 12 })}
     </div>
   </div>
   ${titleBar(teamName, record, logoSvg)}

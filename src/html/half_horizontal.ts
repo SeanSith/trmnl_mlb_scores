@@ -14,7 +14,7 @@ export function renderHalfHorizontal(opts: RenderOptions): string {
 
   return `${TRMNL_ASSETS}
 <div class="view view--half_horizontal">
-  <div class="flex flex--row flex--center-x flex--stretch w--full h--full flex--content-between">
+  <div class="layout layout--row">
     <div class="card flex flex--col flex--stretch-x">
       ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 80)}
     </div>

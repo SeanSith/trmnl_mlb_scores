@@ -60,6 +60,7 @@ export function nextGameCard(
   utcOffsetSeconds: number,
   oppLogoSvg: string | null,
   logoSize = 140,
+  textSizes = { myTeam: 18, opp: 25, datetime: 20 },
 ): string {
   if (upcoming.length === 0) {
     return `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">No Upcoming Games</p></div>`;
@@ -87,10 +88,10 @@ export function nextGameCard(
 
   return `<div class="title flex bg--gray-5 pt--1 pb--1"><p class="text--center w--full">${title}</p></div>
 <div class="flex flex--col flex--center-y h--full">
-  <div class="flex w--full flex--center-x" style="font-size:18px;">${myTeam.name} ${sep}</div>
-  <div class="flex w--full flex--center-x"><strong style="font-size:25px;margin-bottom:0;">${opp.name}</strong></div>
+  <div class="flex w--full flex--center-x" style="font-size:${textSizes.myTeam}px;">${myTeam.name} ${sep}</div>
+  <div class="flex w--full flex--center-x"><strong style="font-size:${textSizes.opp}px;margin-bottom:0;">${opp.name}</strong></div>
   <div class="flex w--full flex--center-x">${logoImg}</div>
-  <div class="flex w--full flex--center-x" style="margin-top:5px;font-size:20px;">${formatDate(d)} &middot; ${formatTime(d)}</div>
+  <div class="flex w--full flex--center-x" style="margin-top:5px;font-size:${textSizes.datetime}px;">${formatDate(d)} &middot; ${formatTime(d)}</div>
 </div>`;
 }
 

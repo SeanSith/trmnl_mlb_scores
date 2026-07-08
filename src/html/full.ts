@@ -27,7 +27,7 @@ export function renderFull(opts: RenderOptions): string {
 </style>
 
 <div id="mlb-scores" class="view view--full">
-  <div class="flex flex--col w--full h--full">
+  <div class="layout layout--col">
     <div id="upcoming_games" class="flex flex--row w--full gap--xsmall text--center">
       ${renderUpcomingGames(teamId, upcoming, utcOffsetSeconds)}
     </div>
