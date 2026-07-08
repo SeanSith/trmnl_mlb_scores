@@ -3,19 +3,20 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-01-01",
 	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
 	"observability": {
 		"enabled": true
 	},
 	"kv_namespaces": [
 		{
 			"binding": "USERS",
-			"id": "REPLACE_AFTER_CREATION",
-			"preview_id": "REPLACE_AFTER_CREATION"
+			"id": "3ad6baabeddd47a49308906f80fba0d0",
+			"preview_id": "cfed7f9e895248ab889a798c86092154"
 		},
 		{
 			"binding": "SCHEDULE",
-			"id": "REPLACE_AFTER_CREATION",
-			"preview_id": "REPLACE_AFTER_CREATION"
+			"id": "25069234bc6941fe93b0e3a7911b71b5",
+			"preview_id": "2c3819d219cd40ac8dbff3460b769a4c"
 		}
 	],
 	"r2_buckets": [
