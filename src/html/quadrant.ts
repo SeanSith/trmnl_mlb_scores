@@ -15,7 +15,7 @@ export function renderQuadrant(opts: RenderOptions): string {
 <div class="view view--quadrant">
   <div class="layout">
     <div class="card flex flex--col flex--stretch-x">
-      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 60, { myTeam: 12, opp: 16, datetime: 12 }, true, false)}
+      ${nextGameCard(teamId, upcoming, utcOffsetSeconds, oppLogoSvg, 70, { myTeam: 13, opp: 18, datetime: 13 }, false, false)}
     </div>
   </div>
   ${titleBar(teamName, record, logoSvg)}
