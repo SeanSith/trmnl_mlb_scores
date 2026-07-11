@@ -7,6 +7,7 @@ import {
   formatDate,
   formatTime,
   logoDataUri,
+  matchupAbbr,
   titleBar,
   nextGameCard,
   previousGamesRows,
@@ -51,10 +52,7 @@ function renderUpcomingGames(teamId: number, upcoming: ProcessedGame[], utcOffse
   if (upcoming.length <= 1) return '';
   return upcoming.slice(1, 6).map(game => {
     const d = toUserDate(game.gameDate, utcOffsetSeconds);
-    const isHome = game.home.teamId === teamId;
-    const matchup = isHome
-      ? `${game.home.abbreviation} vs ${game.away.abbreviation}`
-      : `${game.away.abbreviation} @ ${game.home.abbreviation}`;
+    const matchup = matchupAbbr(teamId, game);
     const weekday = d.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
     return `<div class="game flex flex--col flex--center-x flex--center-y p--2 bg--black">
   <div class="matchup"><span class="text--white">${matchup}</span></div>

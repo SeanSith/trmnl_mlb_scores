@@ -47,6 +47,13 @@ export function logoDataUri(svg: string): string {
   return `data:image/svg+xml;base64,${btoa(binary)}`;
 }
 
+export function matchupAbbr(teamId: number, game: ProcessedGame): string {
+  const isHome = game.home.teamId === teamId;
+  return isHome
+    ? `${game.home.abbreviation} vs ${game.away.abbreviation}`
+    : `${game.away.abbreviation} @ ${game.home.abbreviation}`;
+}
+
 export function titleBar(teamName: string, record: { wins: number; losses: number }, logoSvg: string): string {
   return `<div class="title_bar">
   <img src="${logoDataUri(logoSvg)}" alt="${teamName} logo" class="image">
@@ -112,9 +119,7 @@ export function previousGamesRows(teamId: number, previous: ProcessedGame[], utc
     const oppScore = isHome ? (game.away.score ?? 0) : (game.home.score ?? 0);
     const result = myScore > oppScore ? 'W' : 'L';
     const bgClass = game.statusCode === 'F' && result === 'L' ? 'bg--gray-6' : '';
-    const matchup = isHome
-      ? `${game.home.abbreviation} vs. ${game.away.abbreviation}`
-      : `${game.away.abbreviation} @ ${game.home.abbreviation}`;
+    const matchup = matchupAbbr(teamId, game);
     const d = toUserDate(game.gameDate, utcOffsetSeconds);
     const high = Math.max(myScore, oppScore);
     const low = Math.min(myScore, oppScore);
@@ -126,8 +131,25 @@ export function previousGamesRows(teamId: number, previous: ProcessedGame[], utc
 
     return `<div class="grid col--start grid--cols-5 ${bgClass}" style="font-weight:600;border-radius:10px;padding:5px;">
   <div class="grid col--center col--span-1">${formatShortDate(d)}</div>
-  <div class="grid col--center col--span-2">${matchup}</div>
+  <div class="grid col--center col--span-2" style="white-space:nowrap;">${matchup}</div>
   ${scoreOrStatus}
+</div>`;
+  }).join('');
+}
+
+export function upcomingGamesRows(teamId: number, upcoming: ProcessedGame[], utcOffsetSeconds: number, limit = 4): string {
+  const future = upcoming.slice(1, limit + 1);
+  if (future.length === 0) {
+    return `<p class="text--center w--full">No Upcoming Games</p>`;
+  }
+  return future.map(game => {
+    const d = toUserDate(game.gameDate, utcOffsetSeconds);
+    const weekday = d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+    return `<div class="grid col--start grid--cols-5 bg--black" style="font-weight:600;border-radius:10px;padding:5px;">
+  <div class="grid col--center col--span-1 text--white">${formatShortDate(d)}</div>
+  <div class="grid col--center col--span-2 text--white" style="white-space:nowrap;">${matchupAbbr(teamId, game)}</div>
+  <div class="grid col--center col--span-1 text--white">${weekday}</div>
+  <div class="grid col--center col--span-1 text--white">${formatTime(d)}</div>
 </div>`;
   }).join('');
 }
